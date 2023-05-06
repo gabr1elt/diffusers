@@ -12,6 +12,9 @@ LABEL repository="diffusers"
 LABEL type=$TYPE
 
 USER root
+ARG USERNAME="root"
+ARG HOME="/home/"$USERNAME
+WORKDIR $HOME
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -41,23 +44,23 @@ RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-a
     tar -xf /tmp/vscode-cli.tar.gz -C /usr/local/bin && \
     rm /tmp/vscode-cli.tar.gz
 
-# Creating the user and usergroup
+# # Creating the user and usergroup
 
-ARG USERNAME="user"
-ARG USER_UID=2000
-ARG USER_GID=$USER_UID
-ARG HOME="/home/"$USERNAME
+# ARG USERNAME="user"
+# ARG USER_UID=2000
+# ARG USER_GID=$USER_UID
+# ARG HOME="/home/"$USERNAME
 
-# RUN adduser --disabled-password --gecos '' $USERNAME
-RUN groupadd --gid $USER_GID $USERNAME && \
-    useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
+# # RUN adduser --disabled-password --gecos '' $USERNAME
+# RUN groupadd --gid $USER_GID $USERNAME && \
+#     useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
 
-# sudo no password
-RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL >/etc/sudoers.d/$USERNAME && \
-    chmod 0440 /etc/sudoers.d/$USERNAME
+# # sudo no password
+# RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL >/etc/sudoers.d/$USERNAME && \
+#     chmod 0440 /etc/sudoers.d/$USERNAME
 
-USER $USERNAME
-WORKDIR $HOME
+# USER $USERNAME
+# WORKDIR $HOME
 
 # wokdir
 ARG WORKSPACE_ROOT=$HOME"/Development"
