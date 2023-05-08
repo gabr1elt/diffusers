@@ -19,6 +19,7 @@ WORKDIR $HOME
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
+    # apt-get install -y --no-install-recommends \
     apt-get install -y \
         bash \
         sudo \
@@ -34,7 +35,6 @@ RUN apt-get update && \
         python3 \
         python3-pip \
         python3-venv && \
-    # apt-get install -y --no-install-recommends \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
