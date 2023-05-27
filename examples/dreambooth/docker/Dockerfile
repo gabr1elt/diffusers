@@ -1,8 +1,9 @@
 # FROM ubuntu:20.04
 # FROM ubuntu:22.04
 # FROM ubuntu:latest
-FROM ubuntu:rolling
+# FROM ubuntu:rolling
 # FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:12.0.1-cudnn8-runtime-ubuntu22.04
 # FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 as base
 
 ARG TYPE="dreambooth-training-dev"
@@ -38,12 +39,6 @@ RUN apt-get update && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-# install vscode server
-
-RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64" -o /tmp/vscode-cli.tar.gz && \
-    tar -xf /tmp/vscode-cli.tar.gz -C /usr/local/bin && \
-    rm /tmp/vscode-cli.tar.gz
-
 # # Creating the user and usergroup
 
 # ARG USERNAME="user"
@@ -62,9 +57,11 @@ RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-a
 # USER $USERNAME
 # WORKDIR $HOME
 
-# wokdir
-ARG WORKSPACE_ROOT=$HOME"/Development"
-RUN mkdir -p $WORKSPACE_ROOT
+# install vscode server
+
+RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64" -o /tmp/vscode-cli.tar.gz && \
+    tar -xf /tmp/vscode-cli.tar.gz -C /usr/local/bin && \
+    rm /tmp/vscode-cli.tar.gz
 
 # # install open vscode server
 
@@ -77,6 +74,48 @@ RUN mkdir -p $WORKSPACE_ROOT
 #     mv -f /tmp/${RELEASE_TAG}-linux-x64 ${OPENVSCODE_SERVER_ROOT} && \
 #     rm -f /tmp/${RELEASE_TAG}-linux-x64.tar.gz && \
 #     cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code
+
+# install python packages
+
+# make sure to use venv
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# pre-install the heavy dependencies (these can later be overridden by the deps from setup.py)
+# RUN python3 -m pip install --no-cache-dir --upgrade pip
+RUN python3 -m pip install --no-cache-dir \
+        torch \
+        torchvision \
+        torchaudio
+RUN python3 -m pip install --no-cache-dir \
+        accelerate \
+        datasets \
+        # hf-doc-builder \
+        # huggingface-hub \
+        Jinja2 \
+        librosa \
+        numpy \
+        scipy \
+        tensorboard \
+        transformers \
+        diffusers
+RUN python3 -m pip install --no-cache-dir \
+        ipykernel \
+        safetensors \
+        torch-tb-profiler \
+        compel
+
+# fix for 'Could not load library libcudnn_cnn_infer.so.8'
+RUN apt-get update && \
+    # apt-get install -y --no-install-recommends \
+    apt-get install -y \
+        nvidia-cudnn && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# wokdir
+ARG WORKSPACE_ROOT=$HOME"/Development"
+RUN mkdir -p $WORKSPACE_ROOT
 
 WORKDIR $WORKSPACE_ROOT
 
