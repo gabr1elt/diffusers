@@ -1,16 +1,14 @@
-# FROM ubuntu:20.04
-# FROM ubuntu:22.04
-# FROM ubuntu:latest
-# FROM ubuntu:rolling
-# FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
-FROM nvidia/cuda:12.0.1-cudnn8-runtime-ubuntu22.04
-# FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 as base
+FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04 as diffusers-dreambooth-dev
 
-ARG TYPE="dreambooth-training-dev"
+# init
+
+ARG TYPE="diffusers-dreambooth-dev"
 
 LABEL maintainer="gabr1elt"
 LABEL repository="diffusers"
 LABEL type=$TYPE
+
+# switch to root
 
 USER root
 ARG USERNAME="root"
@@ -19,61 +17,101 @@ WORKDIR $HOME
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# install default packages
+
 RUN apt-get update && \
     # apt-get install -y --no-install-recommends \
     apt-get install -y \
+        # utils
+        aptitude \
         bash \
         sudo \
+        xsel \
         ranger \
         byobu \
+        nano \
+        htop \
+        nmon \
         build-essential \
         git \
         git-lfs \
         curl \
         wget \
+        gnupg \
         ca-certificates \
         libsndfile1-dev \
+        libgl1 \
+        pkg-config \
+        software-properties-common \
+        unzip \
+        # data
+        visidata \
+        graphviz \
+        lnav \
+        # db
+        sqlite \
+        sqlite3-tools \
+        # vision
+        tesseract-ocr \
+        ## java ##
+        # default-jdk-headless \
+        # default-jdk \
+        # openjdk-11-jdk \
+        openjdk-21-jdk \
+        # default-jre-headless \
+        # default-jre \
+        # openjdk-11-jre \
+        # openjdk-21-jre \
+        ## javascript ##
+        nodejs \
+        npm \
+        ## python ##
         python3 \
         python3-pip \
-        python3-venv && \
+        python3-wheel \
+        python3-venv \
+        python3-openpyxl \
+        python3-arrow && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-# # Creating the user and usergroup
 
-# ARG USERNAME="user"
-# ARG USER_UID=2000
-# ARG USER_GID=$USER_UID
-# ARG HOME="/home/"$USERNAME
+# Installs Node via nvm (Node Version Manager)
 
-# # RUN adduser --disabled-password --gecos '' $USERNAME
-# RUN groupadd --gid $USER_GID $USERNAME && \
-#     useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
+RUN curl -fsSL -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
+    # load nvm
+    \. $HOME/.nvm/nvm.sh && \
+    nvm install --lts && \
+    node -v && \
+    npm -v
 
-# # sudo no password
-# RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL >/etc/sudoers.d/$USERNAME && \
-#     chmod 0440 /etc/sudoers.d/$USERNAME
 
-# USER $USERNAME
-# WORKDIR $HOME
+# Install CUDA packages
 
-# install vscode server
+RUN apt-get update && \
+    # apt-get install -y --no-install-recommends \
+    apt-get install -y \
+        # TensorRT Version (import tensorflow.compiler as tf_cc; print(tf_cc.tf2tensorrt._pywrap_py_utils.get_linked_tensorrt_version())): https://github.com/tensorflow/build/blob/master/tensorflow_runtime_dockerfiles/gpu.packages.txt
+        # tensorrt && \
+        libnvinfer-plugin8=8.6.1.6-1+cuda12.0 \
+        libnvinfer8=8.6.1.6-1+cuda12.0 && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64" -o /tmp/vscode-cli.tar.gz && \
-    tar -xf /tmp/vscode-cli.tar.gz -C /usr/local/bin && \
-    rm /tmp/vscode-cli.tar.gz
 
-# # install open vscode server
+# install openvscode server
 
-# ARG RELEASE_TAG="openvscode-server-v1.78.0"
-# ARG OPENVSCODE_SERVER_ROOT=$HOME"/.openvscode-server"
+ARG OPENVSCODE_SERVER_ROOT="/opt/openvscode-server"
+# ARG OPENVSCODE_SERVER_RELEASE_TAG="openvscode-server-insiders-v1.90.0"
 
-# # Downloading the latest VSC Server release and extracting the release archive
-# RUN curl -fsSL https://github.com/gitpod-io/openvscode-server/releases/download/${RELEASE_TAG}/${RELEASE_TAG}-linux-x64.tar.gz -o /tmp/${RELEASE_TAG}-linux-x64.tar.gz && \
-#     tar -xzf /tmp/${RELEASE_TAG}-linux-x64.tar.gz -C /tmp && \
-#     mv -f /tmp/${RELEASE_TAG}-linux-x64 ${OPENVSCODE_SERVER_ROOT} && \
-#     rm -f /tmp/${RELEASE_TAG}-linux-x64.tar.gz && \
-#     cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code
+RUN RELEASE_TAG="${OPENVSCODE_SERVER_RELEASE_TAG:-$(curl -fsSL -o /dev/null -w %{url_effective} https://github.com/gitpod-io/openvscode-server/releases/latest | cut -d '/' -f 8)}" && \
+    curl -fsSL https://github.com/gitpod-io/openvscode-server/releases/download/${RELEASE_TAG}/${RELEASE_TAG}-linux-x64.tar.gz -o /tmp/${RELEASE_TAG}-linux-x64.tar.gz && \
+    tar -xzf /tmp/${RELEASE_TAG}-linux-x64.tar.gz -C /tmp && \
+    rm -f /tmp/${RELEASE_TAG}-linux-x64.tar.gz && \
+    mv -f /tmp/${RELEASE_TAG}-linux-x64 ${OPENVSCODE_SERVER_ROOT} && \
+    ln -s  ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code && \
+    ln -s  ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server /usr/local/bin/code
+
 
 # install python packages
 
@@ -82,36 +120,80 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # pre-install the heavy dependencies (these can later be overridden by the deps from setup.py)
-# RUN python3 -m pip install --no-cache-dir --upgrade pip
+
+RUN python3 -m pip install --no-cache-dir \
+        py-cpuinfo \
+        ipykernel \
+        ipywidgets \
+        python-dotenv \
+        Jinja2 \
+        lxml \ 
+        odfpy \ 
+        openpyxl \
+        pyarrow \ 
+        matplotlib \
+        seaborn \
+        plotly \
+        requests \
+        streamlit \
+        pillow \
+        opencv-python \
+        pytesseract \
+        numpy \
+        scipy \
+        pandas \
+        numexpr \ 
+        bottleneck \ 
+        numba \ 
+        scikit-learn \
+        xgboost \
+        keras \
+        SQLAlchemy \ 
+        pymysql
+        # psycopg2 \ 
+        # mplfinance \
+        # pandas_ta \
+        # TA-Lib \
+        # alpaca-py \
+        # pymarketstore
+
 RUN python3 -m pip install --no-cache-dir \
         torch \
         torchvision \
-        torchaudio
-RUN python3 -m pip install --no-cache-dir \
+        torchaudio \
+        pytorch-lightning \
         accelerate \
         datasets \
         # hf-doc-builder \
         # huggingface-hub \
-        Jinja2 \
+        # hf_transfer \
+        invisible_watermark \
         librosa \
-        numpy \
-        scipy \
         tensorboard \
         transformers \
-        diffusers
-RUN python3 -m pip install --no-cache-dir \
-        ipykernel \
+        diffusers \
         safetensors \
         torch-tb-profiler \
         compel
 
-# fix for 'Could not load library libcudnn_cnn_infer.so.8'
-RUN apt-get update && \
-    # apt-get install -y --no-install-recommends \
-    apt-get install -y \
-        nvidia-cudnn && \
-    apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/*
+
+# # fix for 'Could not load library libcudnn_cnn_infer.so.8'
+# RUN apt-get update && \
+#    # apt-get install -y --no-install-recommends \
+#    apt-get install -y \
+#        python3-opencv \
+#        nvidia-cudnn && \
+#    apt-get clean -y && \
+#    rm -rf /var/lib/apt/lists/*
+
+
+# config git
+
+RUN git config --global user.email "torcat.m.gabriel@gmail.com" && \
+    git config --global user.name "gabr1elt"
+
+# end
+
 
 # wokdir
 ARG WORKSPACE_ROOT=$HOME"/Development"
@@ -124,10 +206,8 @@ ENV LANG=C.UTF-8 \
     EDITOR=code \
     VISUAL=code \
     GIT_EDITOR="code --wait" \
-#     OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT} \
-#     HOME=${WORKSPACE_ROOT} \
     WORKSPACE_ROOT=${WORKSPACE_ROOT}
 
-CMD [ "code", "tunnel", "--accept-server-license-terms", "--disable-telemetry" ]
-# EXPOSE 3000
-# CMD [ "/bin/sh", "-c", "${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server --host 0.0.0.0 --without-connection-token \"${@}\"", "--" ]
+EXPOSE 3000
+CMD [ "code", "--host", "0.0.0.0", "--without-connection-token" ]
+
