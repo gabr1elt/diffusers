@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2023 HuggingFace Inc.
+# Copyright 2024 HuggingFace Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import numpy as np
 import torch
 
 from diffusers import DDIMPipeline, DDIMScheduler, UNet2DModel
-from diffusers.utils.testing_utils import require_torch_gpu, slow, torch_device
+from diffusers.utils.testing_utils import enable_full_determinism, require_torch_gpu, slow, torch_device
 
 from ..pipeline_params import UNCONDITIONAL_IMAGE_GENERATION_BATCH_PARAMS, UNCONDITIONAL_IMAGE_GENERATION_PARAMS
 from ..test_pipelines_common import PipelineTesterMixin
 
 
-torch.backends.cuda.matmul.allow_tf32 = False
+enable_full_determinism()
 
 
 class DDIMPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
@@ -38,14 +38,14 @@ class DDIMPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
         "callback_steps",
     }
     batch_params = UNCONDITIONAL_IMAGE_GENERATION_BATCH_PARAMS
-    test_cpu_offload = False
 
     def get_dummy_components(self):
         torch.manual_seed(0)
         unet = UNet2DModel(
-            block_out_channels=(32, 64),
-            layers_per_block=2,
-            sample_size=32,
+            block_out_channels=(4, 8),
+            layers_per_block=1,
+            norm_num_groups=4,
+            sample_size=8,
             in_channels=3,
             out_channels=3,
             down_block_types=("DownBlock2D", "AttnDownBlock2D"),
@@ -64,7 +64,7 @@ class DDIMPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
             "batch_size": 1,
             "generator": generator,
             "num_inference_steps": 2,
-            "output_type": "numpy",
+            "output_type": "np",
         }
         return inputs
 
@@ -80,12 +80,22 @@ class DDIMPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
         image = pipe(**inputs).images
         image_slice = image[0, -3:, -3:, -1]
 
-        self.assertEqual(image.shape, (1, 32, 32, 3))
-        expected_slice = np.array(
-            [1.000e00, 5.717e-01, 4.717e-01, 1.000e00, 0.000e00, 1.000e00, 3.000e-04, 0.000e00, 9.000e-04]
-        )
+        self.assertEqual(image.shape, (1, 8, 8, 3))
+        expected_slice = np.array([0.0, 9.979e-01, 0.0, 9.999e-01, 9.986e-01, 9.991e-01, 7.106e-04, 0.0, 0.0])
         max_diff = np.abs(image_slice.flatten() - expected_slice).max()
         self.assertLessEqual(max_diff, 1e-3)
+
+    def test_dict_tuple_outputs_equivalent(self):
+        super().test_dict_tuple_outputs_equivalent(expected_max_difference=3e-3)
+
+    def test_save_load_local(self):
+        super().test_save_load_local(expected_max_difference=3e-3)
+
+    def test_save_load_optional_components(self):
+        super().test_save_load_optional_components(expected_max_difference=3e-3)
+
+    def test_inference_batch_single_identical(self):
+        super().test_inference_batch_single_identical(expected_max_diff=3e-3)
 
 
 @slow
@@ -102,7 +112,7 @@ class DDIMPipelineIntegrationTests(unittest.TestCase):
         ddim.set_progress_bar_config(disable=None)
 
         generator = torch.manual_seed(0)
-        image = ddim(generator=generator, eta=0.0, output_type="numpy").images
+        image = ddim(generator=generator, eta=0.0, output_type="np").images
 
         image_slice = image[0, -3:, -3:, -1]
 
@@ -122,7 +132,7 @@ class DDIMPipelineIntegrationTests(unittest.TestCase):
         ddpm.set_progress_bar_config(disable=None)
 
         generator = torch.manual_seed(0)
-        image = ddpm(generator=generator, output_type="numpy").images
+        image = ddpm(generator=generator, output_type="np").images
 
         image_slice = image[0, -3:, -3:, -1]
 

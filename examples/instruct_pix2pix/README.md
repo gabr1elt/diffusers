@@ -58,14 +58,14 @@ write_basic_config()
 
 ### Toy example
 
-As mentioned before, we'll use a [small toy dataset](https://huggingface.co/datasets/fusing/instructpix2pix-1000-samples) for training. The dataset 
+As mentioned before, we'll use a [small toy dataset](https://huggingface.co/datasets/fusing/instructpix2pix-1000-samples) for training. The dataset
 is a smaller version of the [original dataset](https://huggingface.co/datasets/timbrooks/instructpix2pix-clip-filtered) used in the InstructPix2Pix paper.
 
 Configure environment variables such as the dataset identifier and the Stable Diffusion
 checkpoint:
 
 ```bash
-export MODEL_NAME="runwayml/stable-diffusion-v1-5"
+export MODEL_NAME="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export DATASET_ID="fusing/instructpix2pix-1000-samples"
 ```
 
@@ -83,7 +83,8 @@ accelerate launch --mixed_precision="fp16" train_instruct_pix2pix.py \
     --learning_rate=5e-05 --max_grad_norm=1 --lr_warmup_steps=0 \
     --conditioning_dropout_prob=0.05 \
     --mixed_precision=fp16 \
-    --seed=42 
+    --seed=42 \
+    --push_to_hub
 ```
 
 Additionally, we support performing validation inference to monitor training progress
@@ -104,10 +105,11 @@ accelerate launch --mixed_precision="fp16" train_instruct_pix2pix.py \
     --val_image_url="https://hf.co/datasets/diffusers/diffusers-images-docs/resolve/main/mountain.png" \
     --validation_prompt="make the mountains snowy" \
     --seed=42 \
-    --report_to=wandb 
+    --report_to=wandb \
+    --push_to_hub
  ```
 
- We recommend this type of validation as it can be useful for model debugging. Note that you need `wandb` installed to use this. You can install `wandb` by running `pip install wandb`. 
+ We recommend this type of validation as it can be useful for model debugging. Note that you need `wandb` installed to use this. You can install `wandb` by running `pip install wandb`.
 
  [Here](https://wandb.ai/sayakpaul/instruct-pix2pix/runs/ctr3kovq), you can find an example training run that includes some validation samples and the training hyperparameters.
 
@@ -118,9 +120,9 @@ accelerate launch --mixed_precision="fp16" train_instruct_pix2pix.py \
 `accelerate` allows for seamless multi-GPU training. Follow the instructions [here](https://huggingface.co/docs/accelerate/basic_tutorials/launch)
 for running distributed training with `accelerate`. Here is an example command:
 
-```bash 
+```bash
 accelerate launch --mixed_precision="fp16" --multi_gpu train_instruct_pix2pix.py \
- --pretrained_model_name_or_path=runwayml/stable-diffusion-v1-5 \
+ --pretrained_model_name_or_path=stable-diffusion-v1-5/stable-diffusion-v1-5 \
  --dataset_name=sayakpaul/instructpix2pix-1000-samples \
  --use_ema \
  --enable_xformers_memory_efficient_attention \
@@ -131,7 +133,8 @@ accelerate launch --mixed_precision="fp16" --multi_gpu train_instruct_pix2pix.py
  --learning_rate=5e-05 --lr_warmup_steps=0 \
  --conditioning_dropout_prob=0.05 \
  --mixed_precision=fp16 \
- --seed=42 
+ --seed=42 \
+ --push_to_hub
 ```
 
  ## Inference
@@ -144,7 +147,7 @@ import requests
 import torch
 from diffusers import StableDiffusionInstructPix2PixPipeline
 
-model_id = "your_model_id" # <- replace this 
+model_id = "your_model_id" # <- replace this
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
 generator = torch.Generator("cuda").manual_seed(0)
 
@@ -163,10 +166,10 @@ num_inference_steps = 20
 image_guidance_scale = 1.5
 guidance_scale = 10
 
-edited_image = pipe(prompt, 
-    image=image, 
-    num_inference_steps=num_inference_steps, 
-    image_guidance_scale=image_guidance_scale, 
+edited_image = pipe(prompt,
+    image=image,
+    num_inference_steps=num_inference_steps,
+    image_guidance_scale=image_guidance_scale,
     guidance_scale=guidance_scale,
     generator=generator,
 ).images[0]
@@ -185,3 +188,9 @@ speed and quality during performance:
 
 Particularly, `image_guidance_scale` and `guidance_scale` can have a profound impact
 on the generated ("edited") image (see [here](https://twitter.com/RisingSayak/status/1628392199196151808?s=20) for an example).
+
+If you're looking for some interesting ways to use the InstructPix2Pix training methodology, we welcome you to check out this blog post: [Instruction-tuning Stable Diffusion with InstructPix2Pix](https://huggingface.co/blog/instruction-tuning-sd).
+
+## Stable Diffusion XL
+
+There's an equivalent `train_instruct_pix2pix_sdxl.py` script for [Stable Diffusion XL](https://huggingface.co/papers/2307.01952). Please refer to the docs [here](./README_sdxl.md) to learn more.

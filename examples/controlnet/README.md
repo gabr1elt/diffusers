@@ -45,7 +45,7 @@ write_basic_config()
 
 The original dataset is hosted in the [ControlNet repo](https://huggingface.co/lllyasviel/ControlNet/blob/main/training/fill50k.zip). We re-uploaded it to be compatible with `datasets` [here](https://huggingface.co/datasets/fusing/fill50k). Note that `datasets` handles dataloading within the training script.
 
-Our training examples use [Stable Diffusion 1.5](https://huggingface.co/runwayml/stable-diffusion-v1-5) as the original set of ControlNet models were trained from it. However, ControlNet can be trained to augment any Stable Diffusion compatible model (such as [CompVis/stable-diffusion-v1-4](https://huggingface.co/CompVis/stable-diffusion-v1-4)) or [stabilityai/stable-diffusion-2-1](https://huggingface.co/stabilityai/stable-diffusion-2-1).
+Our training examples use [Stable Diffusion 1.5](https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5) as the original set of ControlNet models were trained from it. However, ControlNet can be trained to augment any Stable Diffusion compatible model (such as [CompVis/stable-diffusion-v1-4](https://huggingface.co/CompVis/stable-diffusion-v1-4)) or [stabilityai/stable-diffusion-2-1](https://huggingface.co/stabilityai/stable-diffusion-2-1).
 
 ## Training
 
@@ -59,7 +59,7 @@ wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/ma
 
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="path to save model"
 
 accelerate launch train_controlnet.py \
@@ -81,7 +81,7 @@ biases.
 Gradient accumulation with a smaller batch size can be used to reduce training requirements to ~20 GB VRAM.
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="path to save model"
 
 accelerate launch train_controlnet.py \
@@ -101,8 +101,8 @@ accelerate launch train_controlnet.py \
 `accelerate` allows for seamless multi-GPU training. Follow the instructions [here](https://huggingface.co/docs/accelerate/basic_tutorials/launch)
 for running distributed training with `accelerate`. Here is an example command:
 
-```bash 
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+```bash
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="path to save model"
 
 accelerate launch --mixed_precision="fp16" --multi_gpu train_controlnet.py \
@@ -123,21 +123,21 @@ accelerate launch --mixed_precision="fp16" --multi_gpu train_controlnet.py \
 
 #### After 300 steps with batch size 8
 
-| |  | 
+| |  |
 |-------------------|:-------------------------:|
-| | red circle with blue background  | 
+| | red circle with blue background  |
 ![conditioning image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_1.png) | ![red circle with blue background](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/red_circle_with_blue_background_300_steps.png) |
-| | cyan circle with brown floral background | 
+| | cyan circle with brown floral background |
 ![conditioning image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_2.png) | ![cyan circle with brown floral background](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/cyan_circle_with_brown_floral_background_300_steps.png) |
 
 
 #### After 6000 steps with batch size 8:
 
-| |  | 
+| |  |
 |-------------------|:-------------------------:|
-| | red circle with blue background  | 
+| | red circle with blue background  |
 ![conditioning image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_1.png) | ![red circle with blue background](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/red_circle_with_blue_background_6000_steps.png) |
-| | cyan circle with brown floral background | 
+| | cyan circle with brown floral background |
 ![conditioning image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_2.png) | ![cyan circle with brown floral background](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/cyan_circle_with_brown_floral_background_6000_steps.png) |
 
 ## Training on a 16 GB GPU
@@ -149,7 +149,7 @@ Optimizations:
 [bitandbytes install instructions](https://github.com/TimDettmers/bitsandbytes#requirements--installation).
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="path to save model"
 
 accelerate launch train_controlnet.py \
@@ -175,7 +175,7 @@ Optimizations:
 - set grads to none
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="path to save model"
 
 accelerate launch train_controlnet.py \
@@ -194,7 +194,7 @@ accelerate launch train_controlnet.py \
  --set_grads_to_none
 ```
 
-When using `enable_xformers_memory_efficient_attention`, please make sure to install `xformers` by `pip install xformers`. 
+When using `enable_xformers_memory_efficient_attention`, please make sure to install `xformers` by `pip install xformers`.
 
 ## Training on an 8 GB GPU
 
@@ -209,7 +209,7 @@ Optimizations:
 - DeepSpeed stage 2 with parameter and optimizer offloading
 - fp16 mixed precision
 
-[DeepSpeed](https://www.deepspeed.ai/) can offload tensors from VRAM to either 
+[DeepSpeed](https://www.deepspeed.ai/) can offload tensors from VRAM to either
 CPU or NVME. This requires significantly more RAM (about 25 GB).
 
 Use `accelerate config` to enable DeepSpeed stage 2.
@@ -235,7 +235,7 @@ it requires CUDA toolchain with the same version as pytorch. 8-bit optimizer
 does not seem to be compatible with DeepSpeed at the moment.
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="path to save model"
 
 accelerate launch train_controlnet.py \
@@ -256,7 +256,7 @@ accelerate launch train_controlnet.py \
 ## Performing inference with the trained ControlNet
 
 The trained model can be run the same as the original ControlNet pipeline with the newly trained ControlNet.
-Set `base_model_path` and `controlnet_path` to the values `--pretrained_model_name_or_path` and 
+Set `base_model_path` and `controlnet_path` to the values `--pretrained_model_name_or_path` and
 `--output_dir` were respectively set to in the training script.
 
 ```py
@@ -274,9 +274,9 @@ pipe = StableDiffusionControlNetPipeline.from_pretrained(
 
 # speed up diffusion process with faster scheduler and memory optimization
 pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
-# remove following line if xformers is not installed
+# remove following line if xformers is not installed or when using Torch 2.0.
 pipe.enable_xformers_memory_efficient_attention()
-
+# memory optimization.
 pipe.enable_model_cpu_offload()
 
 control_image = load_image("./conditioning_image_1.png")
@@ -285,9 +285,8 @@ prompt = "pale golden rod circle with old lace background"
 # generate image
 generator = torch.manual_seed(0)
 image = pipe(
-     prompt, num_inference_steps=20, generator=generator, image=control_image
+    prompt, num_inference_steps=20, generator=generator, image=control_image
 ).images[0]
-
 image.save("./output.png")
 ```
 
@@ -316,13 +315,13 @@ gcloud alpha compute tpus tpu-vm ssh $VM_NAME --zone $ZONE -- \
 
 When connected install JAX `0.4.5`:
 
-```
+```sh
 pip install "jax[tpu]==0.4.5" -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
 ```
 
 To verify that JAX was correctly installed, you can run the following command:
 
-```
+```py
 import jax
 jax.device_count()
 ```
@@ -352,21 +351,21 @@ pip install wandb
 
 Now let's downloading two conditioning images that we will use to run validation during the training in order to track our progress
 
-```
+```sh
 wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_1.png
 wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_2.png
 ```
 
 We encourage you to store or share your model with the community. To use huggingface hub, please login to your Hugging Face account, or ([create one](https://huggingface.co/docs/diffusers/main/en/training/hf.co/join) if you don’t have one already):
 
-```
+```sh
 huggingface-cli login
 ```
 
 Make sure you have the `MODEL_DIR`,`OUTPUT_DIR` and `HUB_MODEL_ID` environment variables set. The `OUTPUT_DIR` and `HUB_MODEL_ID` variables specify where to save the model to on the Hub:
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="runs/fill-circle-{timestamp}"
 export HUB_MODEL_ID="controlnet-fill-circle"
 ```
@@ -398,7 +397,7 @@ Since we passed the `--push_to_hub` flag, it will automatically create a model r
 Our training script also provides limited support for streaming large datasets from the Hugging Face Hub. In order to enable streaming, one must also set `--max_train_samples`.  Here is an example command (from [this blog article](https://huggingface.co/blog/train-your-controlnet)):
 
 ```bash
-export MODEL_DIR="runwayml/stable-diffusion-v1-5"
+export MODEL_DIR="stable-diffusion-v1-5/stable-diffusion-v1-5"
 export OUTPUT_DIR="runs/uncanny-faces-{timestamp}"
 export HUB_MODEL_ID="controlnet-uncanny-faces"
 
@@ -430,12 +429,12 @@ When work with a larger dataset, you may need to run training process for a long
 ```bash
  --checkpointing_steps=500
 ```
-This will save the trained model in subfolders of your output_dir. Subfolder names is the number of steps performed so far; for example: a checkpoint saved after 500 training steps would be saved in a subfolder named 500 
+This will save the trained model in subfolders of your output_dir. Subfolder names is the number of steps performed so far; for example: a checkpoint saved after 500 training steps would be saved in a subfolder named 500
 
-You can then start your training from this saved checkpoint with 
+You can then start your training from this saved checkpoint with
 
 ```bash
- --controlnet_model_name_or_path="./control_out/500" 
+ --controlnet_model_name_or_path="./control_out/500"
 ```
 
 We support training with the Min-SNR weighting strategy proposed in [Efficient Diffusion Training via Min-SNR Weighting Strategy](https://arxiv.org/abs/2303.09556) which helps to achieve faster convergence by rebalancing the loss. To use it, one needs to set the `--snr_gamma` argument. The recommended value when using it is `5.0`.
@@ -460,3 +459,7 @@ The profile can then be inspected at http://localhost:6006/#profile
 Sometimes you'll get version conflicts (error messages like `Duplicate plugins for name projector`), which means that you have to uninstall and reinstall all versions of Tensorflow/Tensorboard (e.g. with `pip uninstall tensorflow tf-nightly tensorboard tb-nightly tensorboard-plugin-profile && pip install tf-nightly tbp-nightly tensorboard-plugin-profile`).
 
 Note that the debugging functionality of the Tensorboard `profile` plugin is still under active development. Not all views are fully functional, and for example the `trace_viewer` cuts off events after 1M (which can result in all your device traces getting lost if you for example profile the compilation step by accident).
+
+## Support for Stable Diffusion XL
+
+We provide a training script for training a ControlNet with [Stable Diffusion XL](https://huggingface.co/papers/2307.01952). Please refer to [README_sdxl.md](./README_sdxl.md) for more details.
